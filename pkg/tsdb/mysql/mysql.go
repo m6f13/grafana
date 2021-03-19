@@ -10,6 +10,9 @@ import (
 	"strings"
 
 	"github.com/VividCortex/mysqlerr"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/go-sql-driver/mysql"
@@ -80,6 +83,7 @@ type mysqlQueryResultTransformer struct {
 	log log.Logger
 }
 
+// converter map to be implemented here
 func (t *mysqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 
@@ -153,3 +157,50 @@ func (t *mysqlQueryResultTransformer) TransformQueryError(err error) error {
 }
 
 var errQueryFailed = errors.New("query failed - please inspect Grafana server log for details")
+
+var converterList = []sqlutil.StringConverter{
+	{
+		Name:           "handle DOUBLE",
+		InputScanKind:  reflect.Struct,
+		InputTypeName:  "DOUBLE",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableFloat64,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				spew.Dump(in)
+				if in == nil {
+					return nil, nil
+				}
+				v, err := strconv.ParseFloat(*in, 64)
+				if err != nil {
+					return nil, err
+				}
+				return &v, nil
+			},
+		},
+	},
+	{
+		Name:           "handle BIGINT",
+		InputScanKind:  reflect.Struct,
+		InputTypeName:  "BIGINT",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableInt64,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				spew.Dump(in)
+				if in == nil {
+					return nil, nil
+				}
+				v, err := strconv.ParseInt(*in, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+				return &v, nil
+			},
+		},
+	},
+}
+
+func (t *mysqlQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
+	return converterList
+}
