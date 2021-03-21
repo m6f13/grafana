@@ -2,6 +2,46 @@
 
 The open-source platform for monitoring and observability.
 
+## Grafana
+### fork the original repo
+
+### check the fork (no visible parent)
+```
+git remote -v
+```
+### add remote upstream
+```
+git remote add upstream https://github.com/grafana/grafana.git
+```
+### checkout master
+```
+git checkout master
+```
+### fetch changes from original
+```
+git fetch upstream
+```
+### merge changes to own master
+```
+git merge upstream/master
+```
+### docker build
+```
+cd grafana/
+```
+```
+yarn install
+```
+```
+npm run build
+```
+docker build:
+```
+docker build -t m6f13/grafana-master:01 -f Dockerfile .
+```
+
+
+
 [![License](https://img.shields.io/github/license/grafana/grafana)](LICENSE)
 [![Circle CI](https://img.shields.io/circleci/build/gh/grafana/grafana)](https://circleci.com/gh/grafana/grafana)
 [![Go Report Card](https://goreportcard.com/badge/github.com/grafana/grafana)](https://goreportcard.com/report/github.com/grafana/grafana)
